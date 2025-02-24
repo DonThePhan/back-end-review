@@ -1,5 +1,5 @@
 /**
- following this tutorial: https://youtu.be/1oTuMPIwHmk?si=_tKY9GoDNv5QxQXL&t=3648
+ following this tutorial: https://youtu.be/1oTuMPIwHmk?si=lXsEJKrxt_KB2n4o&t=4752
  *  */
 
 require('dotenv').config();
@@ -8,7 +8,9 @@ const db = require('better-sqlite3')('ourApp.db');
 db.pragma('journal_mode = WAL');
 const app = express();
 const bcrypt = require('bcrypt');
+const cookie = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 // database setup start
 const createTables = db.transaction(() => {
@@ -25,22 +27,56 @@ const createTables = db.transaction(() => {
 createTables();
 // database setup end
 
+app.set('view engine', 'ejs');
+app.use(express.urlencoded({extended: false}));
+app.use(express.static('public'));
+app.use(cookieParser()); // allows us to get req.cookies
+
 // this will run before any route is hit
 app.use((req, res, next) => {
+  // try to decode incoming cookie
+  try {
+    const decoded = jwt.verify(req.cookies.ourSimpleApp, process.env.JWTSECRET);
+    req.user = decoded;
+  } catch (err) {
+    req.user = false;
+  }
+
+  res.locals.user = req.user;
+  console.log('req.user => ', req.user);
   res.locals.errors = [];
   next();
 });
 
-app.set('view engine', 'ejs');
-app.use(express.urlencoded({extended: false}));
-// app.use(express.static('public'));
-
 app.get('/', (req, res) => {
+  if (req.user) {
+    return res.render('dashboard');
+  }
   res.render('homepage');
 });
 
 app.get('/login', (req, res) => {
   res.render('login');
+});
+
+app.get('/logout', (req, res) => {
+  res.clearCookie('ourSimpleApp');
+  res.redirect('/');
+});
+
+app.post('/login', (req, res) => {
+  const errors = [];
+  let {username, password} = req.body;
+
+  if (typeof username !== 'string') username = '';
+  if (typeof req.body.password !== 'string') req.body.password = '';
+
+  if (username.trim() == '' || !password)
+    errors.push('Invalid username/password');
+
+  if (errors) return res.render('login', {errors});
+
+  res.send('Logged in!');
 });
 
 app.post('/register', (req, res) => {
@@ -90,7 +126,7 @@ app.post('/register', (req, res) => {
   );
 
   res.cookie(
-    'ourSimleApp', // cookie name
+    'ourSimpleApp', // cookie name
     ourTokenValue, // cookie value
     {
       httpOnly: true, // so that client side js cannot access cookies in the browser. Cookies only sent automatically w/ each request
@@ -100,7 +136,6 @@ app.post('/register', (req, res) => {
     }
   );
 
-  // log the user in by giving them a cookie
   res.send('Thank You!');
 });
 
