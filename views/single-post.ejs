@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<%- include('includes/head') %>
+
+  <body>
+    <%- include('includes/header') %>
+      <main>
+        <h1>
+          <%= post.title %>
+        </h1>
+        <article><small>posted by <%= post.username %> on <%= getFormattedDate(post.createdDate) %></small>
+          <div>
+            <%= post.body %>
+          </div>
+        </article>
+      </main>
+      <%- include('includes/footer') %>
+  </body>
+
+</html>

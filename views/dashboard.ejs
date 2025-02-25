@@ -7,11 +7,15 @@
     <%- include('includes/header') %>
       <main>
         <h2>Welcome to your dashboard</h2>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Unde deserunt exercitationem voluptate? Molestiae
-          natus
-          eos, facere cum, ducimus placeat deleniti beatae ab illum porro quos delectus expedita! Numquam, obcaecati
-          itaque?
-        </p>
+        <ul>
+          <% posts.forEach(post=> { %>
+            <li><a href="/post/<%= post.id %>">
+                <%= post.title %>
+              </a>
+              on <%= getFormattedDate(post.createdDate) %>
+            </li>
+            <% }) %>
+        </ul>
 
       </main>
       <%- include('includes/footer') %>
